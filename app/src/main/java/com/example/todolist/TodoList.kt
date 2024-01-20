@@ -180,11 +180,3 @@ fun TodoCard(
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun TodoPreview() {
-    TodoListTheme {
-        TodoList()
-    }
-}
