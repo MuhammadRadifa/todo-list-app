@@ -1,26 +1,34 @@
 package com.example.todolist
 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,10 +42,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.TodoListTheme
 
+data class TodoListItem(val id:Int,val task:String)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoList(){
-    var showDialog by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(true) }
+    var todoItem by remember { mutableStateOf(listOf<TodoListItem>()) }
+    var taskTodo by remember { mutableStateOf("") }
+    var isEditMode by remember { mutableStateOf(false) }
+    var todoId by remember { mutableStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -45,10 +59,21 @@ fun TodoList(){
             .padding(10.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
-            TodoCard()
+        LazyColumn {
+            items(todoItem){
+                items ->
+                TodoCard(item = items,
+                    editHandler = {
+                                    taskTodo = items.task
+                                    showDialog = true
+                                    isEditMode = true
+                                    todoId = items.id
+                    },
+                    deleteHandler = {
+                        todoItem = todoItem - items
+                })
+            }
         }
-
         //add task
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -71,16 +96,57 @@ fun TodoList(){
 
         //dialog
         if(showDialog){
-            AlertDialog(onDismissRequest = { showDialog = false }) {
-                Text(text = "hello")
-            }
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                confirmButton = {
+                    Button(onClick = {
+                        if(isEditMode){
+                            todoItem = todoItem.map { it.copy(task = if(todoId == it.id)taskTodo else it.task)}
+                        }else{
+                            if(taskTodo.isNotBlank()){
+                                val id = todoItem.size + 1
+                                todoItem = todoItem + TodoListItem(id = id, task = taskTodo)
+                            }
+                        }
+
+                        showDialog = false
+                        isEditMode = false
+                        taskTodo = ""
+                    }) {
+                        Text(text = "Save")
+                    }
+                                },
+                dismissButton = {
+                    Button(onClick = {
+                        showDialog = false
+                        isEditMode = false
+                        taskTodo = ""
+                                     }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
+                        Text(text = "Cancel")
+                }
+                },
+                title = { Text(text = "TodoList")},
+                text = {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    OutlinedTextField(
+                        value = taskTodo,
+                        onValueChange = {taskTodo = it},
+                        label = {Text("Add Task")}
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+            )
         }
     }
 }
 
 
 @Composable
-fun TodoCard(){
+fun TodoCard(
+    item:TodoListItem,
+    editHandler:()->Unit,
+    deleteHandler:()->Unit
+){
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -101,13 +167,13 @@ fun TodoCard(){
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "test ini adalah kata yang panjang",
+                text = item.task,
                 )
             Row {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = editHandler) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Button")
                 }
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = deleteHandler ) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Button" )
                 }
             }
