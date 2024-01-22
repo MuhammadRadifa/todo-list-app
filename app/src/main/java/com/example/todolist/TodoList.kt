@@ -2,6 +2,7 @@ package com.example.todolist
 
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,10 +62,10 @@ fun TodoList(){
     var taskTodo by remember { mutableStateOf("") }
     var isEditMode by remember { mutableStateOf(false) }
     var todoId by remember { mutableStateOf(0) }
-
+    val (_,todoComplete) = todoItem.partition { !it.isCompleted }
     Scaffold(
         modifier = Modifier.padding(10.dp),
-        topBar = {AssistChipContainer()},
+        topBar = {AssistChipContainer(todoItem.size,todoComplete.size)},
         bottomBar = {
 
             //dialog
@@ -183,10 +184,8 @@ fun TodoCard(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 10.dp
-        ),
-        shape = RoundedCornerShape(0)
+        border = BorderStroke(1.dp, Color.Gray),
+        shape = RoundedCornerShape(10)
     ) {
         Row(
             modifier = Modifier
@@ -212,14 +211,14 @@ fun TodoCard(
 }
 
 @Composable
-fun AssistChipContainer(){
+fun AssistChipContainer(todoSize:Int,todoComplete:Int){
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ){
        AssistChip(
            onClick = { Log.d("Assist chip", "hello world") },
-           label = { Text("Assist chip") },
+           label = { Text("Task : ${todoSize}") },
            leadingIcon = {
                Icon(
                    Icons.Filled.AccountBox,
@@ -230,7 +229,7 @@ fun AssistChipContainer(){
        )
         AssistChip(
             onClick = { Log.d("Assist chip", "hello world") },
-            label = { Text("Assist chip") },
+            label = { Text("Complete : ${todoComplete}") },
             leadingIcon = {
                 Icon(
                     Icons.Filled.Check,
@@ -241,7 +240,7 @@ fun AssistChipContainer(){
         )
         AssistChip(
             onClick = { Log.d("Assist chip", "hello world") },
-            label = { Text("Assist chip") },
+            label = { Text("Progress : ${todoSize - todoComplete}") },
             leadingIcon = {
                 Icon(
                     Icons.Filled.Close,
