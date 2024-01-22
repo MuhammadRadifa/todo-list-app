@@ -3,7 +3,6 @@ package com.example.todolist
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,11 +19,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,7 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.todolist.ui.theme.TodoListTheme
+import androidx.compose.ui.unit.sp
+
 
 data class TodoListItem(val id:Int,val task:String,val isCompleted:Boolean = false)
 
@@ -58,7 +55,7 @@ data class TodoListItem(val id:Int,val task:String,val isCompleted:Boolean = fal
 @Composable
 fun TodoList(){
     var showDialog by remember { mutableStateOf(false) }
-    var todoItem by remember { mutableStateOf(listOf<TodoListItem>(TodoListItem(10,"Ini Benar"))) }
+    var todoItem by remember { mutableStateOf(listOf<TodoListItem>()) }
     var taskTodo by remember { mutableStateOf("") }
     var isEditMode by remember { mutableStateOf(false) }
     var todoId by remember { mutableStateOf(0) }
@@ -67,6 +64,61 @@ fun TodoList(){
         modifier = Modifier.padding(10.dp),
         topBar = {AssistChipContainer(todoItem.size,todoComplete.size)},
         bottomBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    modifier = Modifier
+                        .padding(0.dp)
+                        .fillMaxWidth(),
+                    onClick = { showDialog = true },
+                    shape = RoundedCornerShape(0)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Button",
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+
+        }
+    ){
+        innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = if(todoItem.isNotEmpty()) Arrangement.Top else Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if(todoItem.isNotEmpty()){
+                LazyColumn {
+                    items(todoItem){
+                            items ->
+                        TodoCard(item = items,
+                            editHandler = {
+                                taskTodo = items.task
+                                showDialog = true
+                                isEditMode = true
+                                todoId = items.id
+                            },
+                            deleteHandler = {
+                                todoItem = todoItem - items
+                            },
+                            completeHandler = {
+                                    isCompleteBoolean ->
+//                        Log.i("CHECK",isCompleteBoolean.toString())
+                                todoItem = todoItem.map { it.copy(isCompleted = if(items.id == it.id) isCompleteBoolean else it.isCompleted)}
+                            }
+                        )
+                    }
+                }
+            }else{
+                Text(text = "Task Is Empty", fontSize = 24.sp)
+            }
+
 
             //dialog
             if(showDialog){
@@ -111,56 +163,7 @@ fun TodoList(){
                     }
                 )
             }
-        }
-    ){
-        innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
 
-            LazyColumn {
-                items(todoItem){
-                        items ->
-                    TodoCard(item = items,
-                        editHandler = {
-                            taskTodo = items.task
-                            showDialog = true
-                            isEditMode = true
-                            todoId = items.id
-                        },
-                        deleteHandler = {
-                            todoItem = todoItem - items
-                        },
-                        completeHandler = {
-                                isCompleteBoolean ->
-//                        Log.i("CHECK",isCompleteBoolean.toString())
-                            todoItem = todoItem.map { it.copy(isCompleted = if(items.id == it.id) isCompleteBoolean else it.isCompleted)}
-                        }
-                    )
-                }
-            }
-            //add task
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Button(
-                    modifier = Modifier
-                        .padding(0.dp)
-                        .fillMaxWidth(),
-                    onClick = { showDialog = true },
-                    shape = RoundedCornerShape(0)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Button",
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-            }
     }
 
 
