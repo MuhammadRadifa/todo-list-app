@@ -1,6 +1,7 @@
 package com.example.todolist
 
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,13 +44,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.todolist.ui.theme.TodoListTheme
 
-data class TodoListItem(val id:Int,val task:String)
+data class TodoListItem(val id:Int,val task:String,val isCompleted:Boolean = false)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoList(){
-    var showDialog by remember { mutableStateOf(true) }
-    var todoItem by remember { mutableStateOf(listOf<TodoListItem>()) }
+    var showDialog by remember { mutableStateOf(false) }
+    var todoItem by remember { mutableStateOf(listOf<TodoListItem>(TodoListItem(10,"Ini Benar"))) }
     var taskTodo by remember { mutableStateOf("") }
     var isEditMode by remember { mutableStateOf(false) }
     var todoId by remember { mutableStateOf(0) }
@@ -71,7 +73,13 @@ fun TodoList(){
                     },
                     deleteHandler = {
                         todoItem = todoItem - items
-                })
+                },
+                    completeHandler = {
+                        isCompleteBoolean ->
+//                        Log.i("CHECK",isCompleteBoolean.toString())
+                        todoItem = todoItem.map { it.copy(isCompleted = if(items.id == it.id) isCompleteBoolean else it.isCompleted)}
+                    }
+                    )
             }
         }
         //add task
@@ -145,7 +153,8 @@ fun TodoList(){
 fun TodoCard(
     item:TodoListItem,
     editHandler:()->Unit,
-    deleteHandler:()->Unit
+    deleteHandler:()->Unit,
+    completeHandler:(Boolean)->Unit,
 ){
     Card(
         modifier = Modifier
@@ -176,7 +185,15 @@ fun TodoCard(
                 IconButton(onClick = deleteHandler ) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete Button" )
                 }
+                Checkbox(checked = item.isCompleted, onCheckedChange = { completeHandler(it) })
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+
+@Composable
+fun TodoPreview(){
+    TodoList()
 }
