@@ -17,10 +17,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -32,6 +36,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,96 +62,109 @@ fun TodoList(){
     var isEditMode by remember { mutableStateOf(false) }
     var todoId by remember { mutableStateOf(0) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        LazyColumn {
-            items(todoItem){
-                items ->
-                TodoCard(item = items,
-                    editHandler = {
-                                    taskTodo = items.task
-                                    showDialog = true
-                                    isEditMode = true
-                                    todoId = items.id
+    Scaffold(
+        modifier = Modifier.padding(10.dp),
+        topBar = {AssistChipContainer()},
+        bottomBar = {
+
+            //dialog
+            if(showDialog){
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    confirmButton = {
+                        Button(onClick = {
+                            if(isEditMode){
+                                todoItem = todoItem.map { it.copy(task = if(todoId == it.id)taskTodo else it.task)}
+                            }else{
+                                if(taskTodo.isNotBlank()){
+                                    val id = todoItem.size + 1
+                                    todoItem = todoItem + TodoListItem(id = id, task = taskTodo)
+                                }
+                            }
+
+                            showDialog = false
+                            isEditMode = false
+                            taskTodo = ""
+                        }) {
+                            Text(text = "Save")
+                        }
                     },
-                    deleteHandler = {
-                        todoItem = todoItem - items
-                },
-                    completeHandler = {
-                        isCompleteBoolean ->
-//                        Log.i("CHECK",isCompleteBoolean.toString())
-                        todoItem = todoItem.map { it.copy(isCompleted = if(items.id == it.id) isCompleteBoolean else it.isCompleted)}
+                    dismissButton = {
+                        Button(onClick = {
+                            showDialog = false
+                            isEditMode = false
+                            taskTodo = ""
+                        }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
+                            Text(text = "Cancel")
+                        }
+                    },
+                    title = { Text(text = "TodoList")},
+                    text = {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        OutlinedTextField(
+                            value = taskTodo,
+                            onValueChange = {taskTodo = it},
+                            label = {Text("Add Task")}
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
-                    )
-            }
-        }
-        //add task
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Button(
-                modifier = Modifier
-                    .padding(0.dp)
-                    .fillMaxWidth(),
-                onClick = { showDialog = true },
-                shape = RoundedCornerShape(0)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Button",
-                    modifier = Modifier.size(30.dp)
                 )
             }
         }
+    ){
+        innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
 
-        //dialog
-        if(showDialog){
-            AlertDialog(
-                onDismissRequest = { showDialog = false },
-                confirmButton = {
-                    Button(onClick = {
-                        if(isEditMode){
-                            todoItem = todoItem.map { it.copy(task = if(todoId == it.id)taskTodo else it.task)}
-                        }else{
-                            if(taskTodo.isNotBlank()){
-                                val id = todoItem.size + 1
-                                todoItem = todoItem + TodoListItem(id = id, task = taskTodo)
-                            }
+            LazyColumn {
+                items(todoItem){
+                        items ->
+                    TodoCard(item = items,
+                        editHandler = {
+                            taskTodo = items.task
+                            showDialog = true
+                            isEditMode = true
+                            todoId = items.id
+                        },
+                        deleteHandler = {
+                            todoItem = todoItem - items
+                        },
+                        completeHandler = {
+                                isCompleteBoolean ->
+//                        Log.i("CHECK",isCompleteBoolean.toString())
+                            todoItem = todoItem.map { it.copy(isCompleted = if(items.id == it.id) isCompleteBoolean else it.isCompleted)}
                         }
-
-                        showDialog = false
-                        isEditMode = false
-                        taskTodo = ""
-                    }) {
-                        Text(text = "Save")
-                    }
-                                },
-                dismissButton = {
-                    Button(onClick = {
-                        showDialog = false
-                        isEditMode = false
-                        taskTodo = ""
-                                     }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
-                        Text(text = "Cancel")
-                }
-                },
-                title = { Text(text = "TodoList")},
-                text = {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    OutlinedTextField(
-                        value = taskTodo,
-                        onValueChange = {taskTodo = it},
-                        label = {Text("Add Task")}
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
                 }
-            )
-        }
+            }
+            //add task
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    modifier = Modifier
+                        .padding(0.dp)
+                        .fillMaxWidth(),
+                    onClick = { showDialog = true },
+                    shape = RoundedCornerShape(0)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Button",
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+    }
+
+
+
+
     }
 }
 
@@ -164,7 +184,7 @@ fun TodoCard(
             containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 6.dp
+            defaultElevation = 10.dp
         ),
         shape = RoundedCornerShape(0)
     ) {
@@ -188,6 +208,48 @@ fun TodoCard(
                 Checkbox(checked = item.isCompleted, onCheckedChange = { completeHandler(it) })
             }
         }
+    }
+}
+
+@Composable
+fun AssistChipContainer(){
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ){
+       AssistChip(
+           onClick = { Log.d("Assist chip", "hello world") },
+           label = { Text("Assist chip") },
+           leadingIcon = {
+               Icon(
+                   Icons.Filled.AccountBox,
+                   contentDescription = "Localized description",
+                   Modifier.size(AssistChipDefaults.IconSize)
+               )
+           }
+       )
+        AssistChip(
+            onClick = { Log.d("Assist chip", "hello world") },
+            label = { Text("Assist chip") },
+            leadingIcon = {
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = "Localized description",
+                    Modifier.size(AssistChipDefaults.IconSize)
+                )
+            }
+        )
+        AssistChip(
+            onClick = { Log.d("Assist chip", "hello world") },
+            label = { Text("Assist chip") },
+            leadingIcon = {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Localized description",
+                    Modifier.size(AssistChipDefaults.IconSize)
+                )
+            }
+        )
     }
 }
 
